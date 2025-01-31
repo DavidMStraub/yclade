@@ -1,8 +1,11 @@
 """Tools for finding the best sublade for a given set of SNPs."""
 
-from yclade.types import SnpResults, YTreeData, CladeName, CladeMatchInfo
+from yclade.types import CladeMatchInfo, CladeName, SnpResults, YTreeData
 
-def find_nodes_with_positive_matches(tree: YTreeData, snps: SnpResults) -> set[CladeName]:
+
+def find_nodes_with_positive_matches(
+    tree: YTreeData, snps: SnpResults
+) -> set[CladeName]:
     """Find the nodes in the tree that have at least one matching positive SNP."""
     nodes = set()
     for clade, clade_snps in tree.snps.items():
@@ -10,13 +13,16 @@ def find_nodes_with_positive_matches(tree: YTreeData, snps: SnpResults) -> set[C
             nodes.add(clade)
     return nodes
 
-def get_nodes_with_match_info(tree: YTreeData, snps: SnpResults) -> dict[CladeName, CladeMatchInfo]:
+
+def get_nodes_with_match_info(
+    tree: YTreeData, snps: SnpResults
+) -> dict[CladeName, CladeMatchInfo]:
     """Find the nodes in the tree that have overlap with postive or negative SNPs."""
     node_info = {}
     for clade, clade_snps in tree.snps.items():
         node_info[clade] = CladeMatchInfo(
             positive=len(snps.positive & clade_snps),
             negative=len(snps.negative & clade_snps),
-            length=len(clade_snps)
+            length=len(clade_snps),
         )
     return node_info
