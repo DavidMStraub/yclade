@@ -10,8 +10,8 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/p/yclade
-  permissions:
-    id-token: write
+    permissions:
+      id-token: write
   steps:
     - name: Checkout repository
       uses: actions/checkout@v3
