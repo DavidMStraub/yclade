@@ -5,7 +5,7 @@ import pytest
 import yclade.find
 import yclade.snps
 from yclade.tree import _build_graph, _get_clade_snps
-from yclade.types import YTreeData
+from yclade.types import CladeMatchInfo, YTreeData
 
 
 @pytest.fixture
@@ -47,3 +47,13 @@ def test_find_nodes_with_positive_matches_single(tree_data):
     snps = yclade.snps.parse_snp_results("g+")
     nodes = yclade.find.find_nodes_with_positive_matches(tree_data, snps)
     assert nodes == {"C"}
+
+def test_get_nodes_with_match_info(tree_data):
+    snps = yclade.snps.parse_snp_results("a+,b-,d+")
+    node_info = yclade.find.get_nodes_with_match_info(tree_data, snps)
+    assert node_info == {
+        "A": CladeMatchInfo(positive=1, negative=1, length=3),
+        "B": CladeMatchInfo(positive=2, negative=1, length=5),
+        "C": CladeMatchInfo(positive=2, negative=1, length=6),
+        "root": CladeMatchInfo(positive=0, negative=0, length=0),
+    }

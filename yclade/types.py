@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from grapheme import length
 import networkx as nx
 
 
@@ -23,3 +24,11 @@ class SnpResults:
     """A set of positive and negative Y SNP test results."""
     positive: set[Snp]
     negative: set[Snp]
+
+
+@dataclass
+class CladeMatchInfo:
+    """A data type containing the number of positive and negative SNPs matched."""
+    positive: int
+    negative: int
+    length: int
