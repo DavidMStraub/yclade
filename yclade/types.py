@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 
-from grapheme import length
 import networkx as nx
 
 
