@@ -1,5 +1,7 @@
 """Utilities to handle the Y tree data."""
 
+from __future__ import annotations
+
 import json
 import logging
 import urllib.request
