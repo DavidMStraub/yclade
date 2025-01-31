@@ -5,9 +5,9 @@ from dataclasses import dataclass
 import networkx as nx
 
 
-SNP = str
-CLADE_NAME = str
-CladeSnps = dict[CLADE_NAME, set[SNP]]
+Snp = str
+CladeName = str
+CladeSnps = dict[CladeName, set[Snp]]
 
 
 @dataclass
@@ -16,3 +16,10 @@ class YTreeData:
 
     graph: nx.DiGraph
     snps: CladeSnps
+
+
+@dataclass
+class SnpResults:
+    """A set of positive and negative Y SNP test results."""
+    positive: set[Snp]
+    negative: set[Snp]
