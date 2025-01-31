@@ -53,19 +53,15 @@ def _build_graph(
 
 def _get_clade_snps(tree_data, snps: CladeSnps | None = None) -> CladeSnps:
     """Recursively get the dictionary of clade SNPs from the tree data."""
-    print(tree_data["id"])
     if not snps:
         snps = {}
     if "snps" in tree_data:
         if tree_data["snps"]:
             snps[tree_data["id"]] = set(tree_data["snps"].split(", "))
-            print(snps)
         else:
             snps[tree_data["id"]] = set()
-            print(snps)
     else:
         snps[tree_data["id"]] = set()
-        print(snps)
     for child in tree_data.get("children", []):
         _get_clade_snps(child, snps)
     return snps
