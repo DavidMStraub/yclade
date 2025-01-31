@@ -1,0 +1,18 @@
+# Python
+__pycache__
+
+# setuptools
+/dist
+/*.egg-info
+
+# mypy
+.mypy_cache/
+
+# IntelliJ/PyCharm
+*.iml
+.idea
+
+# Miscelaneous
+/build
+/target
+.DS_Store

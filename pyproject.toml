@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yclade"
+dynamic = ["version"]
+description = "A Python library to find the position on the human Y chromosome tree given a set of single nucleotide polymorphisms (SNPs)."
+license = {text = "MIT"}
+readme = "README.md"
+authors = [
+    {name = "David Straub", email = "straub@protonmail.com"}
+]
+requires-python = ">=3.9"
+dependencies = [
+    "platformdirs",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0"
+]
+
+[tool.isort]
+profile = "black"
+
+[tool.setuptools_scm]
+version_file = "yclade/_version.py"
