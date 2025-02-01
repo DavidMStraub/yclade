@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 import networkx as nx
 
-from yclade.types import CladeMatchInfo, CladeName, Snp, SnpResults, YTreeData
+from yclade.types import CladeInfo, CladeMatchInfo, CladeName, SnpResults, YTreeData
 
 
 def find_nodes_with_positive_matches(
@@ -63,6 +63,29 @@ def get_node_path_scores(
     return scores
 
 
-def scoring_function(match_info: CladeMatchInfo) -> float:
+def simple_scoring_function(match_info: CladeMatchInfo) -> float:
     """Score a node based on the number of positive and negative SNPs."""
     return match_info.positive - match_info.negative
+
+
+def get_ordered_clade_details(tree: YTreeData, snps: SnpResults) -> list[CladeInfo]:
+    """Get an ordered list of clades with their match info."""
+    candidates = find_nodes_with_positive_matches(tree=tree, snps=snps)
+    candidate_scores = {}
+    for node in candidates:
+        scores = get_node_path_scores(
+            tree=tree,
+            node=node,
+            snps=snps,
+            scoring_function=simple_scoring_function,
+        )
+        total_score = sum(scores.values())
+        candidate_scores[node] = total_score
+    return [
+        CladeInfo(
+            name=node,
+            age_info=tree.clade_age_infos[node],
+            score=candidate_scores[node],
+        )
+        for node in sorted(candidates, key=lambda x: candidate_scores[x], reverse=True)
+    ]
