@@ -18,7 +18,7 @@ class CladeAgeInfo:
     formed: float | None
     """How many years ago the clade was formed."""
 
-    formed_confidence_interval: tuple[float, float]  | None
+    formed_confidence_interval: tuple[float, float] | None
     """95 % confidence interval for the formed age."""
 
     most_recent_common_ancestor: float | None
@@ -33,12 +33,19 @@ CladeAgeInfos = dict[CladeName, CladeAgeInfo]
 
 @dataclass
 class YTreeData:
-    """Y tree data structure."""
+    """A data type representing the information in the Y tree."""
 
     graph: nx.DiGraph
+    """A networkx DiGraph representing the tree's nodes as clade IDs."""
+
     clade_snps: CladeSnps
+    """A dictionary of clade IDs to sets of SNPs."""
+
     clade_age_infos: CladeAgeInfos
+    """A dictionary of clade IDs to estimated age information."""
+
     snp_aliases: dict[Snp, Snp]
+    """A dictionary of SNP aliases to their canonical form."""
 
 
 @dataclass
@@ -46,7 +53,10 @@ class SnpResults:
     """A set of positive and negative Y SNP test results."""
 
     positive: set[Snp]
+    """The set of positively tested SNPs."""
+
     negative: set[Snp]
+    """The set of negatively tested SNPs."""
 
 
 @dataclass
@@ -54,8 +64,13 @@ class CladeMatchInfo:
     """A data type containing the number of positive and negative SNPs matched."""
 
     positive: int
+    """Number of positively tested SNPs that are present in the clade."""
+
     negative: int
+    """Number of negatively tested SNPs that are present in the clade."""
+
     length: int
+    """Total number of SNPs present in the clade."""
 
 
 @dataclass
