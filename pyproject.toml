@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=64", "setuptools-scm>=8"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "yclade"
-dynamic = ["version"]
+version = "0.3.0"
 description = "A Python library to find the position on the human Y chromosome tree given a set of single nucleotide polymorphisms (SNPs)."
 license = {text = "MIT"}
 readme = "README.md"
