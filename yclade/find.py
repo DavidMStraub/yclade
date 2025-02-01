@@ -1,8 +1,10 @@
 """Tools for finding the best sublade for a given set of SNPs."""
 
+from collections.abc import Callable
+
 import networkx as nx
 
-from yclade.types import CladeMatchInfo, CladeName, SnpResults, YTreeData, Snp
+from yclade.types import CladeMatchInfo, CladeName, Snp, SnpResults, YTreeData
 
 
 def find_nodes_with_positive_matches(
@@ -17,7 +19,9 @@ def find_nodes_with_positive_matches(
     return nodes
 
 
-def get_node_match_info(tree: YTreeData, node: CladeName, snps: SnpResults) -> CladeMatchInfo:
+def get_node_match_info(
+    tree: YTreeData, node: CladeName, snps: SnpResults
+) -> CladeMatchInfo:
     """Get the match info for a single node."""
     clade_snps = tree.clade_snps[node]
     positives = set(tree.snp_aliases.get(snp, snp) for snp in snps.positive)
@@ -30,6 +34,7 @@ def get_node_match_info(tree: YTreeData, node: CladeName, snps: SnpResults) -> C
         length=len(clade_snps),
     )
 
+
 def get_all_nodes_match_info(
     tree: YTreeData, snps: SnpResults
 ) -> dict[CladeName, CladeMatchInfo]:
@@ -40,3 +45,24 @@ def get_all_nodes_match_info(
             continue
         node_info[clade] = get_node_match_info(tree, clade, snps)
     return node_info
+
+
+def get_node_path_scores(
+    tree: YTreeData,
+    node: CladeName,
+    snps: SnpResults,
+    scoring_function: Callable[[CladeMatchInfo], float],
+) -> dict[CladeName, float]:
+    """Get the score for a single node."""
+    scores = {}
+    for ancestor_node in nx.ancestors(tree.graph, node):
+        match_info = get_node_match_info(tree=tree, node=ancestor_node, snps=snps)
+        scores[ancestor_node] = scoring_function(match_info)
+    match_info = get_node_match_info(tree=tree, node=node, snps=snps)
+    scores[node] = scoring_function(match_info)
+    return scores
+
+
+def scoring_function(match_info: CladeMatchInfo) -> float:
+    """Score a node based on the number of positive and negative SNPs."""
+    return match_info.positive - match_info.negative
