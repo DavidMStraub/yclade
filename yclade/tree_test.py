@@ -10,31 +10,51 @@ import pytest
 import yclade.tree
 
 
+def _age_info(formed):
+    """Create dummy age info."""
+    return {
+        "formed": formed,
+        "formedhighage": formed + 100,
+        "formedlowage": formed - 100,
+        "tmrca": formed + 200,
+        "tmrcahighage": formed + 300,
+        "tmrcalowage": formed + 100,
+    }
+
+
 @pytest.fixture
 def tree_data():
     return {
         "id": "root",
+        **_age_info(22000),
         "children": [
             {
                 "id": "A",
+                **_age_info(21000),
                 "snps": "",
                 "children": [
                     {
                         "id": "B",
+                        **_age_info(20000),
                         "snps": "s1/t1, s2",
                         "children": [
-                            {"id": "C", "children": []},
-                            {"id": "D", "children": []},
+                            {"id": "C", **_age_info(18000), "children": []},
+                            {"id": "D", **_age_info(18000), "children": []},
                         ],
                     }
                 ],
             },
             {
                 "id": "E",
+                **_age_info(20000),
                 "snps": "s3",
                 "children": [
-                    {"id": "F", "children": [{"id": "G", "children": []}]},
-                    {"id": "H", "children": []},
+                    {
+                        "id": "F",
+                        **_age_info(12000),
+                        "children": [{"id": "G", "children": []}],
+                    },
+                    {"id": "H", **_age_info(13000), "children": []},
                 ],
             },
         ],
@@ -96,3 +116,12 @@ def test_yfull_tree_to_tree_data(tree_data):
         "H": set(),
     }
     assert tree_data_object.snp_aliases == {"s1": "s1/t1", "t1": "s1/t1"}
+    assert tree_data_object.clade_age_infos["root"].formed == 22000
+    assert tree_data_object.clade_age_infos["root"].formed_confidence_interval == (
+        21900,
+        22100,
+    )
+    assert tree_data_object.clade_age_infos["root"].most_recent_common_ancestor == 22200
+    assert tree_data_object.clade_age_infos[
+        "root"
+    ].most_recent_common_ancestor_confidence_interval == (22100, 22300)

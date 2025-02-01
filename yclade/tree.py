@@ -10,13 +10,14 @@ from pathlib import Path
 
 import networkx as nx
 from platformdirs import user_data_dir
+from sklearn import tree
 
 from yclade.const import (
     YTREE_DEFAULT_VERSION,
     YTREE_URL,
     YTREE_ZIP_FILENAME,
 )
-from yclade.types import CladeSnps, YTreeData, Snp
+from yclade.types import CladeSnps, YTreeData, Snp, CladeAgeInfos, CladeAgeInfo
 
 
 def download_yfull_tree(
@@ -66,6 +67,7 @@ def _get_clade_snps(tree_data, snps: CladeSnps | None = None) -> CladeSnps:
         _get_clade_snps(child, snps)
     return snps
 
+
 def _clade_snps_to_snp_aliases(clade_snps: CladeSnps) -> dict[Snp, Snp]:
     """Create a dictionary of SNP aliases from the clade SNPs."""
     snp_aliases = {}
@@ -78,6 +80,27 @@ def _clade_snps_to_snp_aliases(clade_snps: CladeSnps) -> dict[Snp, Snp]:
     return snp_aliases
 
 
+def _get_clade_age_infos(tree_data, age_infos=None) -> CladeAgeInfos:
+    """Recursively get the clade age information from the tree data."""
+    if age_infos is None:
+        age_infos = {}
+        age_infos[tree_data["id"]] = CladeAgeInfo(
+            formed=tree_data["formed"],
+            formed_confidence_interval=(
+                tree_data["formedlowage"],
+                tree_data["formedhighage"],
+            ),
+            most_recent_common_ancestor=tree_data["tmrca"],
+            most_recent_common_ancestor_confidence_interval=(
+                tree_data["tmrcalowage"],
+                tree_data["tmrcahighage"],
+            ),
+        )
+    for child in tree_data.get("children", []):
+        _get_clade_age_infos(child, age_infos)
+    return age_infos
+
+
 def yfull_tree_to_tree_data(file_path: Path) -> YTreeData:
     """Convert a YFull tree file to a tree data dictionary."""
     with open(file_path) as f:
@@ -85,4 +108,10 @@ def yfull_tree_to_tree_data(file_path: Path) -> YTreeData:
     graph = _build_graph(tree_data)
     clade_snps = _get_clade_snps(tree_data)
     snp_aliases = _clade_snps_to_snp_aliases(clade_snps)
-    return YTreeData(graph=graph, clade_snps=clade_snps, snp_aliases=snp_aliases)
+    clade_age_infos = _get_clade_age_infos(tree_data)
+    return YTreeData(
+        graph=graph,
+        clade_snps=clade_snps,
+        clade_age_infos=clade_age_infos,
+        snp_aliases=snp_aliases,
+    )
