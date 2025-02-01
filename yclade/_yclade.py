@@ -1,5 +1,7 @@
 """Main functions for the yclade package."""
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from . import find, snps, tree, types

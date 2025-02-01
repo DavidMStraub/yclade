@@ -10,7 +10,6 @@ from pathlib import Path
 
 import networkx as nx
 from platformdirs import user_data_dir
-from sklearn import tree
 
 from yclade.const import (
     YTREE_DEFAULT_VERSION,
