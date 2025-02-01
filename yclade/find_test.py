@@ -50,9 +50,9 @@ def test_find_nodes_with_positive_matches_single(tree_data):
     nodes = yclade.find.find_nodes_with_positive_matches(tree_data, snps)
     assert nodes == {"C"}
 
-def test_get_nodes_with_match_info(tree_data):
+def test_get_all_nodes_match_info(tree_data):
     snps = yclade.snps.parse_snp_results("a+,b-,d+")
-    node_info = yclade.find.get_nodes_with_match_info(tree_data, snps)
+    node_info = yclade.find.get_all_nodes_match_info(tree_data, snps)
     assert node_info == {
         "A": CladeMatchInfo(positive=1, negative=1, length=3),
         "B": CladeMatchInfo(positive=2, negative=1, length=5),
