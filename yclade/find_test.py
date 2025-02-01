@@ -31,7 +31,9 @@ def tree_data():
     graph = _build_graph(raw_data)
     clade_snps = _get_clade_snps(raw_data)
     snp_aliases = _clade_snps_to_snp_aliases(clade_snps)
-    return YTreeData(graph=graph, clade_snps=clade_snps, snp_aliases=snp_aliases)
+    return YTreeData(
+        graph=graph, clade_snps=clade_snps, snp_aliases=snp_aliases, clade_age_infos={}
+    )
 
 
 def test_find_nodes_with_positive_matches(tree_data):
@@ -77,14 +79,14 @@ def test_find_nodes_with_positive_matches_alias(tree_data):
 def test_get_node_path_scores(tree_data):
     snps = yclade.snps.parse_snp_results("a+,d+,g-")
     scores = yclade.find.get_node_path_scores(
-        tree_data, "A", snps, yclade.find.scoring_function
+        tree_data, "A", snps, yclade.find.simple_scoring_function
     )
     assert scores == {
         "root": 0.0,
         "A": 1,
     }
     scores = yclade.find.get_node_path_scores(
-        tree_data, "B", snps, yclade.find.scoring_function
+        tree_data, "B", snps, yclade.find.simple_scoring_function
     )
     assert scores == {
         "root": 0.0,
@@ -92,7 +94,7 @@ def test_get_node_path_scores(tree_data):
         "B": 2,
     }
     scores = yclade.find.get_node_path_scores(
-        tree_data, "C", snps, yclade.find.scoring_function
+        tree_data, "C", snps, yclade.find.simple_scoring_function
     )
     assert scores == {
         "root": 0.0,
