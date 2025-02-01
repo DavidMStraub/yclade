@@ -38,7 +38,7 @@ def get_node_match_info(
 def get_all_nodes_match_info(
     tree: YTreeData, snps: SnpResults
 ) -> dict[CladeName, CladeMatchInfo]:
-    """Find the nodes in the tree that have overlap with postive or negative SNPs."""
+    """Get the match info for all nodes in the tree."""
     node_info = {}
     for clade, clade_snps in tree.clade_snps.items():
         if len(clade_snps) == 0:
@@ -53,7 +53,16 @@ def get_node_path_scores(
     snps: SnpResults,
     scoring_function: Callable[[CladeMatchInfo], float],
 ) -> dict[CladeName, float]:
-    """Get the score for a single node."""
+    """Get the score for a single node's path (from the root to the node).
+
+    Args:
+        tree: The YTreeData object.
+        node: The ID of the node to score.
+        snps: The SnpResults to use for scoring.
+        scoring_function: The scoring function to use.
+
+    The scoring function should take a CladeMatchInfo object and return a number.
+    """
     scores = {}
     for ancestor_node in nx.ancestors(tree.graph, node):
         match_info = get_node_match_info(tree=tree, node=ancestor_node, snps=snps)
@@ -69,7 +78,10 @@ def simple_scoring_function(match_info: CladeMatchInfo) -> float:
 
 
 def get_ordered_clade_details(tree: YTreeData, snps: SnpResults) -> list[CladeInfo]:
-    """Get an ordered list of clades with their match info."""
+    """Get an ordered list of clades with their match info.
+
+    The first clade in the list is the best match.
+    """
     candidates = find_nodes_with_positive_matches(tree=tree, snps=snps)
     candidate_scores = {}
     for node in candidates:
