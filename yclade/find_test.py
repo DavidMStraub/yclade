@@ -55,5 +55,4 @@ def test_get_nodes_with_match_info(tree_data):
         "A": CladeMatchInfo(positive=1, negative=1, length=3),
         "B": CladeMatchInfo(positive=2, negative=1, length=5),
         "C": CladeMatchInfo(positive=2, negative=1, length=6),
-        "root": CladeMatchInfo(positive=0, negative=0, length=0),
     }

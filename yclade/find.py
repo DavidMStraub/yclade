@@ -20,9 +20,14 @@ def get_nodes_with_match_info(
     """Find the nodes in the tree that have overlap with postive or negative SNPs."""
     node_info = {}
     for clade, clade_snps in tree.snps.items():
-        node_info[clade] = CladeMatchInfo(
-            positive=len(snps.positive & clade_snps),
-            negative=len(snps.negative & clade_snps),
-            length=len(clade_snps),
-        )
+        if len(clade_snps) == 0:
+            continue
+        positive = len(snps.positive & clade_snps)
+        negative = len(snps.negative & clade_snps)
+        if positive or negative:
+            node_info[clade] = CladeMatchInfo(
+                positive=positive,
+                negative=negative,
+                length=len(clade_snps),
+            )
     return node_info
