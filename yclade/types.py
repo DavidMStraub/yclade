@@ -15,7 +15,7 @@ class YTreeData:
     """Y tree data structure."""
 
     graph: nx.DiGraph
-    snps: CladeSnps
+    clade_snps: CladeSnps
 
 
 @dataclass

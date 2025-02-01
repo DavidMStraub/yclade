@@ -72,5 +72,5 @@ def yfull_tree_to_tree_data(file_path: Path) -> YTreeData:
     with open(file_path) as f:
         tree_data = json.load(f)
     graph = _build_graph(tree_data)
-    snps = _get_clade_snps(tree_data)
-    return YTreeData(graph=graph, snps=snps)
+    clade_snps = _get_clade_snps(tree_data)
+    return YTreeData(graph=graph, clade_snps=clade_snps)

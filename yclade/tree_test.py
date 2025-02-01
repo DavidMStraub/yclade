@@ -84,7 +84,7 @@ def test_yfull_tree_to_tree_data(tree_data):
         "G",
         "H",
     }
-    assert tree_data_object.snps == {
+    assert tree_data_object.clade_snps == {
         "root": set(),
         "A": set(),
         "B": {"s1", "s2"},

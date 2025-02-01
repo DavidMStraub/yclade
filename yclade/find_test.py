@@ -29,8 +29,8 @@ def tree_data():
         ],
     }
     graph = _build_graph(raw_data)
-    snps = _get_clade_snps(raw_data)
-    return YTreeData(graph=graph, snps=snps)
+    clade_snps = _get_clade_snps(raw_data)
+    return YTreeData(graph=graph, clade_snps=clade_snps)
 
 
 def test_find_nodes_with_positive_matches(tree_data):

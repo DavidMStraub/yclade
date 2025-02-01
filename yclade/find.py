@@ -8,7 +8,7 @@ def find_nodes_with_positive_matches(
 ) -> set[CladeName]:
     """Find the nodes in the tree that have at least one matching positive SNP."""
     nodes = set()
-    for clade, clade_snps in tree.snps.items():
+    for clade, clade_snps in tree.clade_snps.items():
         if snps.positive & clade_snps:
             nodes.add(clade)
     return nodes
@@ -19,7 +19,7 @@ def get_nodes_with_match_info(
 ) -> dict[CladeName, CladeMatchInfo]:
     """Find the nodes in the tree that have overlap with postive or negative SNPs."""
     node_info = {}
-    for clade, clade_snps in tree.snps.items():
+    for clade, clade_snps in tree.clade_snps.items():
         if len(clade_snps) == 0:
             continue
         positive = len(snps.positive & clade_snps)
