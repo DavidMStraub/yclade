@@ -16,6 +16,7 @@ class YTreeData:
 
     graph: nx.DiGraph
     clade_snps: CladeSnps
+    snp_aliases: dict[Snp, Snp]
 
 
 @dataclass

@@ -16,7 +16,7 @@ from yclade.const import (
     YTREE_URL,
     YTREE_ZIP_FILENAME,
 )
-from yclade.types import CladeSnps, YTreeData
+from yclade.types import CladeSnps, YTreeData, Snp
 
 
 def download_yfull_tree(
@@ -66,6 +66,17 @@ def _get_clade_snps(tree_data, snps: CladeSnps | None = None) -> CladeSnps:
         _get_clade_snps(child, snps)
     return snps
 
+def _clade_snps_to_snp_aliases(clade_snps: CladeSnps) -> dict[Snp, Snp]:
+    """Create a dictionary of SNP aliases from the clade SNPs."""
+    snp_aliases = {}
+    for snps in clade_snps.values():
+        for snp in snps:
+            if "/" in snp:
+                alias1, alias2 = snp.split("/", 1)
+                snp_aliases[alias1] = snp
+                snp_aliases[alias2] = snp
+    return snp_aliases
+
 
 def yfull_tree_to_tree_data(file_path: Path) -> YTreeData:
     """Convert a YFull tree file to a tree data dictionary."""
@@ -73,4 +84,5 @@ def yfull_tree_to_tree_data(file_path: Path) -> YTreeData:
         tree_data = json.load(f)
     graph = _build_graph(tree_data)
     clade_snps = _get_clade_snps(tree_data)
-    return YTreeData(graph=graph, clade_snps=clade_snps)
+    snp_aliases = _clade_snps_to_snp_aliases(clade_snps)
+    return YTreeData(graph=graph, clade_snps=clade_snps, snp_aliases=snp_aliases)

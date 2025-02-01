@@ -21,7 +21,7 @@ def tree_data():
                 "children": [
                     {
                         "id": "B",
-                        "snps": "s1, s2",
+                        "snps": "s1/t1, s2",
                         "children": [
                             {"id": "C", "children": []},
                             {"id": "D", "children": []},
@@ -87,7 +87,7 @@ def test_yfull_tree_to_tree_data(tree_data):
     assert tree_data_object.clade_snps == {
         "root": set(),
         "A": set(),
-        "B": {"s1", "s2"},
+        "B": {"s1/t1", "s2"},
         "C": set(),
         "D": set(),
         "E": {"s3"},
@@ -95,3 +95,4 @@ def test_yfull_tree_to_tree_data(tree_data):
         "G": set(),
         "H": set(),
     }
+    assert tree_data_object.snp_aliases == {"s1": "s1/t1", "t1": "s1/t1"}

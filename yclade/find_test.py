@@ -2,9 +2,10 @@
 
 import pytest
 
+from yclade import tree
 import yclade.find
 import yclade.snps
-from yclade.tree import _build_graph, _get_clade_snps
+from yclade.tree import _build_graph, _get_clade_snps, _clade_snps_to_snp_aliases
 from yclade.types import CladeMatchInfo, YTreeData
 
 
@@ -19,9 +20,9 @@ def tree_data():
                 "children": [
                     {
                         "id": "B",
-                        "snps": "a, b, d, e, f",
+                        "snps": "a, b, d, e, f/z",
                         "children": [
-                            {"id": "C", "snps": "a, b, d, e, f, g", "children": []},
+                            {"id": "C", "snps": "a, b, d, e, f/z, g", "children": []},
                         ],
                     }
                 ],
@@ -30,7 +31,8 @@ def tree_data():
     }
     graph = _build_graph(raw_data)
     clade_snps = _get_clade_snps(raw_data)
-    return YTreeData(graph=graph, clade_snps=clade_snps)
+    snp_aliases = _clade_snps_to_snp_aliases(clade_snps)
+    return YTreeData(graph=graph, clade_snps=clade_snps, snp_aliases=snp_aliases)
 
 
 def test_find_nodes_with_positive_matches(tree_data):
@@ -56,3 +58,14 @@ def test_get_nodes_with_match_info(tree_data):
         "B": CladeMatchInfo(positive=2, negative=1, length=5),
         "C": CladeMatchInfo(positive=2, negative=1, length=6),
     }
+
+def test_find_nodes_with_positive_matches_alias(tree_data):
+    snps = yclade.snps.parse_snp_results("f+")
+    nodes = yclade.find.find_nodes_with_positive_matches(tree_data, snps)
+    assert nodes == {"B", "C"}
+    snps = yclade.snps.parse_snp_results("z+")
+    nodes = yclade.find.find_nodes_with_positive_matches(tree_data, snps)
+    assert nodes == {"B", "C"}
+    snps = yclade.snps.parse_snp_results("f/z+")
+    nodes = yclade.find.find_nodes_with_positive_matches(tree_data, snps)
+    assert nodes == {"B", "C"}
