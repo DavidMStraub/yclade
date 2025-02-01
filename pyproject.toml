@@ -25,6 +25,3 @@ test = [
 
 [tool.isort]
 profile = "black"
-
-[tool.setuptools_scm]
-version_file = "yclade/_version.py"
