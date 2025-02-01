@@ -21,7 +21,12 @@ from yclade.types import CladeSnps, YTreeData, Snp, CladeAgeInfos, CladeAgeInfo
 
 
 def _get_actual_data_dir(data_dir: Path | None = None) -> Path:
-    """Get the data directory, creating it if it doesn't exist."""
+    """Get the data directory, creating it if it doesn't exist.
+
+    Args:
+        data_dir: The data directory path. If None, the default user data diretory
+            is used, e.g. '~/.local/share/yclade' on Linux.
+    """
     data_dir = data_dir or Path(user_data_dir("yclade"))
     data_dir.mkdir(parents=True, exist_ok=True)
     return data_dir
@@ -30,7 +35,15 @@ def _get_actual_data_dir(data_dir: Path | None = None) -> Path:
 def download_yfull_tree(
     version: str | None = None, data_dir: Path | None = None, force: bool = False
 ) -> None:
-    """Download the YFull tree."""
+    """Download the YFull tree.
+
+    Args:
+        version: The version of the YFull tree to download. If None, the default
+            version is used.
+        data_dir: The directory to store the YFull data. If None, the default user
+            data directory is used.
+        force: If True, the tree is downloaded even if it already exists.
+    """
     version = version or YTREE_DEFAULT_VERSION
     data_dir = _get_actual_data_dir(data_dir)
     file_path = data_dir / YTREE_ZIP_FILENAME.format(version=version)
@@ -118,7 +131,11 @@ def _get_clade_age_infos(tree_data, age_infos=None) -> CladeAgeInfos:
 
 
 def yfull_tree_to_tree_data(file_path: Path) -> YTreeData:
-    """Convert a YFull tree file to a tree data dictionary."""
+    """Convert a YFull tree file to a tree data dictionary.
+
+    Args:
+        file_path: The path to the YFull tree JSON file.
+    """
     with open(file_path) as f:
         tree_data = json.load(f)
     graph = _build_graph(tree_data)
@@ -136,7 +153,14 @@ def yfull_tree_to_tree_data(file_path: Path) -> YTreeData:
 def get_yfull_tree_data(
     version: str | None = None, data_dir: Path | None = None
 ) -> YTreeData:
-    """Get the YFull tree data from cache, download if needed."""
+    """Get the YFull tree data from cache, download if needed.
+
+    Args:
+        version: The version of the YFull tree to download. If None, the default
+            version is used.
+        data_dir: The directory to store the YFull data. If None, the default user
+            data directory is used.
+    """
     download_yfull_tree(version=version, data_dir=data_dir, force=False)
     data_dir = _get_actual_data_dir(data_dir)
     version = version or YTREE_DEFAULT_VERSION
