@@ -102,7 +102,6 @@ def get_ordered_clade_details(tree: YTreeData, snps: SnpResults) -> list[CladeIn
             score=candidate_scores[node],
         )
         for node in sorted(candidates, key=lambda x: candidate_scores[x], reverse=True)
-        if candidate_scores[node] > 0
     ]
 
 
