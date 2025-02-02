@@ -29,6 +29,7 @@ class CladeAgeInfo:
 
 
 CladeAgeInfos = dict[CladeName, CladeAgeInfo]
+SnpAliases = dict[Snp, Snp]
 
 
 @dataclass
@@ -44,7 +45,7 @@ class YTreeData:
     clade_age_infos: CladeAgeInfos
     """A dictionary of clade IDs to estimated age information."""
 
-    snp_aliases: dict[Snp, Snp]
+    snp_aliases: SnpAliases
     """A dictionary of SNP aliases to their canonical form."""
 
 
