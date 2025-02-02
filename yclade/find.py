@@ -1,5 +1,6 @@
 """Tools for finding the best sublade for a given set of SNPs."""
 
+import logging
 from collections.abc import Callable
 
 import networkx as nx
@@ -82,6 +83,7 @@ def get_ordered_clade_details(tree: YTreeData, snps: SnpResults) -> list[CladeIn
 
     The first clade in the list is the best match.
     """
+    warn_unknown_snps(tree=tree, snps=snps)
     candidates = find_nodes_with_positive_matches(tree=tree, snps=snps)
     candidate_scores = {}
     for node in candidates:
@@ -100,4 +102,22 @@ def get_ordered_clade_details(tree: YTreeData, snps: SnpResults) -> list[CladeIn
             score=candidate_scores[node],
         )
         for node in sorted(candidates, key=lambda x: candidate_scores[x], reverse=True)
+        if candidate_scores[node] > 0
     ]
+
+
+def warn_unknown_snps(tree: YTreeData, snps: SnpResults) -> None:
+    """Log a warning if the query contains SNPs not contained in the Y tree."""
+    known_snps = set(tree.snp_aliases.keys()) | set(
+        snp for clade_snps in tree.clade_snps.values() for snp in clade_snps
+    )
+    unknown_snps = (snps.positive | snps.negative) - known_snps
+    if unknown_snps:
+        logger = logging.getLogger("yclade")
+        logger.warning(
+            "The SNP query contains %s SNP%s "
+            "not contained in the Y tree: %s",
+            len(unknown_snps),
+            "s" if len(unknown_snps) > 1 else "",
+            unknown_snps,
+        )
