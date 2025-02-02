@@ -47,12 +47,13 @@ def download_yfull_tree(
     version = version or YTREE_DEFAULT_VERSION
     data_dir = _get_actual_data_dir(data_dir)
     file_path = data_dir / YTREE_ZIP_FILENAME.format(version=version)
+    logger = logging.getLogger("yclade")
     if file_path.exists() and not force:
-        logging.info("YFull tree already downloaded to %s", file_path)
+        logger.info("YFull tree already downloaded to %s", file_path)
         return
     url = YTREE_URL.format(version=version)
     urllib.request.urlretrieve(url, file_path)
-    logging.info("Downloaded YFull tree to %s", file_path)
+    logger.info("Downloaded YFull tree to %s", file_path)
     with zipfile.ZipFile(file_path, "r") as zip_ref:
         zip_ref.extractall(data_dir)
 
@@ -93,9 +94,10 @@ def _clade_snps_to_snp_aliases(clade_snps: CladeSnps) -> dict[Snp, Snp]:
     for snps in clade_snps.values():
         for snp in snps:
             if "/" in snp:
-                alias1, alias2 = snp.split("/", 1)
-                snp_aliases[alias1] = snp
-                snp_aliases[alias2] = snp
+                aliases = snp.split("/")
+                for alias in aliases:
+                    if alias:
+                        snp_aliases[alias] = snp
     return snp_aliases
 
 
@@ -161,8 +163,8 @@ def get_yfull_tree_data(
         data_dir: The directory to store the YFull data. If None, the default user
             data directory is used.
     """
-    download_yfull_tree(version=version, data_dir=data_dir, force=False)
     data_dir = _get_actual_data_dir(data_dir)
     version = version or YTREE_DEFAULT_VERSION
     file_path = data_dir / YTREE_JSON_FILENAME.format(version=version)
+    download_yfull_tree(version=version, data_dir=data_dir, force=False)
     return yfull_tree_to_tree_data(file_path)
