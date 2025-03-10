@@ -81,7 +81,7 @@ class CladeInfo:
     name: str
     """The ID of the clade."""
 
-    age_info: CladeAgeInfo
+    age_info: CladeAgeInfo | None = None
     """The age information for the clade."""
 
     score: float | None = None

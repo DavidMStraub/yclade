@@ -5,7 +5,7 @@ import pytest
 import yclade.find
 import yclade.snps
 from yclade.tree import _build_graph, _clade_snps_to_snp_aliases, _get_clade_snps
-from yclade.types import CladeMatchInfo, YTreeData
+from yclade.types import CladeAgeInfo, CladeMatchInfo, YTreeData
 
 
 @pytest.fixture
@@ -102,3 +102,14 @@ def test_get_node_path_scores(tree_data):
         "B": 2,
         "C": 1,
     }
+
+
+def test_get_clade_lineage(tree_data):
+    ancestors = yclade.find.get_clade_lineage(tree_data, "C")
+    assert [info.name for info in ancestors] == ["root", "A", "B", "C"]
+    ancestors = yclade.find.get_clade_lineage(tree_data, "A")
+    assert [info.name for info in ancestors] == ["root", "A"]
+    ancestors = yclade.find.get_clade_lineage(tree_data, "root")
+    assert [info.name for info in ancestors] == ["root"]
+    ancestors = yclade.find.get_clade_lineage(tree_data, "B")
+    assert [info.name for info in ancestors] == ["root", "A", "B"]

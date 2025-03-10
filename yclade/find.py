@@ -114,9 +114,38 @@ def warn_unknown_snps(tree: YTreeData, snps: SnpResults) -> None:
     if unknown_snps:
         logger = logging.getLogger("yclade")
         logger.warning(
-            "The SNP query contains %s SNP%s "
-            "not contained in the Y tree: %s",
+            "The SNP query contains %s SNP%s " "not contained in the Y tree: %s",
             len(unknown_snps),
             "s" if len(unknown_snps) > 1 else "",
             unknown_snps,
         )
+
+
+def _get_ancestors_ordered(graph: nx.DiGraph, node: str) -> list[str]:
+    """Get the ancestors of a node in order from the root to the node."""
+    ancestors = []
+    visited = set()
+
+    def depth_first_search(n):
+        for parent in graph.predecessors(n):
+            if parent not in visited:
+                visited.add(parent)
+                depth_first_search(parent)
+                ancestors.append(parent)
+
+    depth_first_search(node)
+    return ancestors
+
+
+def get_clade_lineage(tree: YTreeData, node: str) -> list[CladeInfo]:
+    """Get the ancestors of a clade, including the node itself, as a list of
+    `CladeInfo`.
+
+    The clades are ordered from root to leaf."""
+    names = _get_ancestors_ordered(tree.graph, node)
+    names.append(node)
+    clade_age_infos = [tree.clade_age_infos.get(clade) for clade in names]
+    return [
+        CladeInfo(name=clade, age_info=age_info)
+        for clade, age_info in zip(names, clade_age_infos)
+    ]
