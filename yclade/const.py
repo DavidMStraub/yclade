@@ -1,6 +1,6 @@
 """Constants for yclade."""
 
-YTREE_DEFAULT_VERSION = "13.01.0"
+YTREE_DEFAULT_VERSION = "13.04.0"
 """The default version of the YFull tree to download."""
 
 YTREE_URL = (
