@@ -48,6 +48,9 @@ class YTreeData:
     snp_aliases: SnpAliases
     """A dictionary of SNP aliases to their canonical form."""
 
+    version: str | None = None
+    """The version of the YFull tree."""
+
 
 @dataclass
 class SnpResults:

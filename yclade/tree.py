@@ -132,7 +132,7 @@ def _get_clade_age_infos(tree_data, age_infos=None) -> CladeAgeInfos:
     return age_infos
 
 
-def yfull_tree_to_tree_data(file_path: Path) -> YTreeData:
+def yfull_tree_to_tree_data(file_path: Path, version: str | None = None) -> YTreeData:
     """Convert a YFull tree file to a tree data dictionary.
 
     Args:
@@ -149,6 +149,7 @@ def yfull_tree_to_tree_data(file_path: Path) -> YTreeData:
         clade_snps=clade_snps,
         clade_age_infos=clade_age_infos,
         snp_aliases=snp_aliases,
+        version=version,
     )
 
 
@@ -167,4 +168,4 @@ def get_yfull_tree_data(
     version = version or YTREE_DEFAULT_VERSION
     file_path = data_dir / YTREE_JSON_FILENAME.format(version=version)
     download_yfull_tree(version=version, data_dir=data_dir, force=False)
-    return yfull_tree_to_tree_data(file_path)
+    return yfull_tree_to_tree_data(file_path, version=version)
