@@ -52,7 +52,13 @@ def download_yfull_tree(
         logger.info("YFull tree already downloaded to %s", file_path)
         return
     url = YTREE_URL.format(version=version)
-    urllib.request.urlretrieve(url, file_path)
+    tmp_path = file_path.with_suffix(".tmp")
+    try:
+        urllib.request.urlretrieve(url, tmp_path)
+        tmp_path.rename(file_path)
+    except Exception:
+        tmp_path.unlink(missing_ok=True)
+        raise
     logger.info("Downloaded YFull tree to %s", file_path)
     with zipfile.ZipFile(file_path, "r") as zip_ref:
         zip_ref.extractall(data_dir)
@@ -74,7 +80,7 @@ def _build_graph(
 
 def _get_clade_snps(tree_data, snps: CladeSnps | None = None) -> CladeSnps:
     """Recursively get the dictionary of clade SNPs from the tree data."""
-    if not snps:
+    if snps is None:
         snps = {}
     if "snps" in tree_data:
         if tree_data["snps"]:
@@ -105,6 +111,8 @@ def _get_clade_age_infos(tree_data, age_infos=None) -> CladeAgeInfos:
     """Recursively get the clade age information from the tree data."""
     if age_infos is None:
         age_infos = {}
+    for child in tree_data.get("children", []):
+        _get_clade_age_infos(child, age_infos)
     if "formed" not in tree_data:
         return age_infos
     age_infos[tree_data["id"]] = CladeAgeInfo(
@@ -117,7 +125,9 @@ def _get_clade_age_infos(tree_data, age_infos=None) -> CladeAgeInfos:
                 tree_data["formedhighage"],
             )
         ),
-        most_recent_common_ancestor=tree_data["tmrca"],
+        most_recent_common_ancestor=(
+            None if tree_data["tmrca"] == "-" else tree_data["tmrca"]
+        ),
         most_recent_common_ancestor_confidence_interval=(
             None
             if tree_data["tmrcalowage"] == "-" or tree_data["tmrcahighage"] == "-"
@@ -127,8 +137,6 @@ def _get_clade_age_infos(tree_data, age_infos=None) -> CladeAgeInfos:
             )
         ),
     )
-    for child in tree_data.get("children", []):
-        _get_clade_age_infos(child, age_infos)
     return age_infos
 
 
