@@ -124,7 +124,7 @@ def warn_unknown_snps(tree: YTreeData, snps: SnpResults) -> None:
 def _get_ancestors_ordered(graph: nx.DiGraph, node: str) -> list[str]:
     """Get the ancestors of a node in order from the root to the node."""
     ancestors = []
-    visited = {node}  # Seed with the start node so shared ancestors in a DAG aren't appended twice.
+    visited = {node}  # Prevent the start node appearing as its own ancestor if the graph has a cycle.
 
     def depth_first_search(n):
         for parent in graph.predecessors(n):

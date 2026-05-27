@@ -55,7 +55,7 @@ def download_yfull_tree(
     tmp_path = file_path.with_suffix(".tmp")
     try:
         urllib.request.urlretrieve(url, tmp_path)
-        tmp_path.rename(file_path)
+        tmp_path.replace(file_path)
     except Exception:
         tmp_path.unlink(missing_ok=True)
         raise
