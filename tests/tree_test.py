@@ -1,6 +1,7 @@
 """Unit tests for the yclade.tree module."""
 
 import json
+import shutil
 import tempfile
 import zipfile
 from pathlib import Path
@@ -185,3 +186,29 @@ def test_get_yfull_tree_data_is_not_cached_by_default(data_dir_with_zip):
     first = yclade.tree.get_yfull_tree_data(version=version, data_dir=data_dir)
     second = yclade.tree.get_yfull_tree_data(version=version, data_dir=data_dir)
     assert first is not second
+
+
+def test_download_yfull_tree_replaces_a_leftover_json(tmp_path, tree_data, monkeypatch):
+    """A newly downloaded archive wins over a JSON file left from an earlier one."""
+    version = "0.00.0"
+    served_zip = tmp_path / "served.zip"
+    with zipfile.ZipFile(served_zip, "w") as zip_ref:
+        zip_ref.writestr(
+            YTREE_JSON_FILENAME.format(version=version), json.dumps(tree_data)
+        )
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    json_path = data_dir / YTREE_JSON_FILENAME.format(version=version)
+    json_path.write_text(json.dumps({"id": "stale", "children": []}))
+    monkeypatch.setattr(
+        yclade.tree.urllib.request,
+        "urlretrieve",
+        lambda url, path: shutil.copy(served_zip, path),
+    )
+
+    tree_data_object = yclade.tree.get_yfull_tree_data(
+        version=version, data_dir=data_dir
+    )
+
+    assert "stale" not in tree_data_object.graph
+    assert "B" in tree_data_object.graph

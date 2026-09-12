@@ -51,6 +51,7 @@ def download_yfull_tree(
     zip_path = data_dir / YTREE_ZIP_FILENAME.format(version=version)
     json_path = data_dir / YTREE_JSON_FILENAME.format(version=version)
     logger = logging.getLogger("yclade")
+    downloaded = False
     if zip_path.exists() and not force:
         logger.info("YFull tree already downloaded to %s", zip_path)
     else:
@@ -63,9 +64,11 @@ def download_yfull_tree(
             tmp_path.unlink(missing_ok=True)
             raise
         logger.info("Downloaded YFull tree to %s", zip_path)
+        downloaded = True
     # Extract separately from downloading: the JSON can be missing even when the
-    # ZIP file is already cached.
-    if not json_path.exists() or force:
+    # ZIP file is already cached, and a JSON left over from an earlier download
+    # has to be replaced by the contents of a newly downloaded archive.
+    if downloaded or not json_path.exists() or force:
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(data_dir)
         logger.info("Extracted YFull tree to %s", json_path)
