@@ -113,3 +113,38 @@ def test_get_clade_lineage(tree_data):
     assert [info.name for info in ancestors] == ["root"]
     ancestors = yclade.find.get_clade_lineage(tree_data, "B")
     assert [info.name for info in ancestors] == ["root", "A", "B"]
+
+
+def test_get_ordered_clade_details(tree_data):
+    """The best matching clade comes first, scored over the whole lineage."""
+    snps = yclade.snps.parse_snp_results("a+,d+,g-")
+    details = yclade.find.get_ordered_clade_details(tree_data, snps)
+    assert [(info.name, info.score) for info in details] == [
+        ("C", 4),  # root 0 + A 1 + B 2 + C 1
+        ("B", 3),  # root 0 + A 1 + B 2
+        ("A", 1),  # root 0 + A 1
+    ]
+
+
+def test_get_ordered_clade_details_matches_path_scores(tree_data):
+    """Scoring clades once must agree with scoring each path independently."""
+    snps = yclade.snps.parse_snp_results("a+,b+,d+,f-,g-")
+    details = yclade.find.get_ordered_clade_details(tree_data, snps)
+    for info in details:
+        path_scores = yclade.find.get_node_path_scores(
+            tree_data, info.name, snps, yclade.find.simple_scoring_function
+        )
+        assert info.score == sum(path_scores.values())
+
+
+def test_get_clade_lineage_omits_the_empty_root():
+    """The YFull root is part of the graph but not a clade of its own."""
+    raw_data = {"id": "", "children": [{"id": "A00", "snps": "a", "children": []}]}
+    tree_data = YTreeData(
+        graph=_build_graph(raw_data),
+        clade_snps=_get_clade_snps(raw_data),
+        snp_aliases={},
+        clade_age_infos={},
+    )
+    lineage = yclade.find.get_clade_lineage(tree_data, "A00")
+    assert [info.name for info in lineage] == ["A00"]

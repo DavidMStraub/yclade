@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import json
 import logging
 import urllib.request
@@ -20,48 +21,54 @@ from yclade.const import (
 from yclade.types import CladeSnps, YTreeData, Snp, CladeAgeInfos, CladeAgeInfo
 
 
-def _get_actual_data_dir(data_dir: Path | None = None) -> Path:
+def _get_actual_data_dir(data_dir: Path | str | None = None) -> Path:
     """Get the data directory, creating it if it doesn't exist.
 
     Args:
         data_dir: The data directory path. If None, the default user data diretory
             is used, e.g. '~/.local/share/yclade' on Linux.
     """
-    data_dir = data_dir or Path(user_data_dir("yclade"))
+    data_dir = Path(data_dir) if data_dir else Path(user_data_dir("yclade"))
     data_dir.mkdir(parents=True, exist_ok=True)
     return data_dir
 
 
 def download_yfull_tree(
-    version: str | None = None, data_dir: Path | None = None, force: bool = False
+    version: str | None = None, data_dir: Path | str | None = None, force: bool = False
 ) -> None:
-    """Download the YFull tree.
+    """Download and extract the YFull tree.
 
     Args:
         version: The version of the YFull tree to download. If None, the default
             version is used.
         data_dir: The directory to store the YFull data. If None, the default user
             data directory is used.
-        force: If True, the tree is downloaded even if it already exists.
+        force: If True, the tree is downloaded and extracted even if it already
+            exists.
     """
     version = version or YTREE_DEFAULT_VERSION
     data_dir = _get_actual_data_dir(data_dir)
-    file_path = data_dir / YTREE_ZIP_FILENAME.format(version=version)
+    zip_path = data_dir / YTREE_ZIP_FILENAME.format(version=version)
+    json_path = data_dir / YTREE_JSON_FILENAME.format(version=version)
     logger = logging.getLogger("yclade")
-    if file_path.exists() and not force:
-        logger.info("YFull tree already downloaded to %s", file_path)
-        return
-    url = YTREE_URL.format(version=version)
-    tmp_path = file_path.with_suffix(".tmp")
-    try:
-        urllib.request.urlretrieve(url, tmp_path)
-        tmp_path.replace(file_path)
-    except Exception:
-        tmp_path.unlink(missing_ok=True)
-        raise
-    logger.info("Downloaded YFull tree to %s", file_path)
-    with zipfile.ZipFile(file_path, "r") as zip_ref:
-        zip_ref.extractall(data_dir)
+    if zip_path.exists() and not force:
+        logger.info("YFull tree already downloaded to %s", zip_path)
+    else:
+        url = YTREE_URL.format(version=version)
+        tmp_path = zip_path.with_suffix(".tmp")
+        try:
+            urllib.request.urlretrieve(url, tmp_path)
+            tmp_path.replace(zip_path)
+        except Exception:
+            tmp_path.unlink(missing_ok=True)
+            raise
+        logger.info("Downloaded YFull tree to %s", zip_path)
+    # Extract separately from downloading: the JSON can be missing even when the
+    # ZIP file is already cached.
+    if not json_path.exists() or force:
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            zip_ref.extractall(data_dir)
+        logger.info("Extracted YFull tree to %s", json_path)
 
 
 def _build_graph(
@@ -71,7 +78,9 @@ def _build_graph(
     if graph is None:
         graph = nx.DiGraph()
     graph.add_node(node["id"])
-    if parent:
+    # The root of the YFull tree has an empty ID, so compare against None: a
+    # falsy check would leave the top level clades disconnected from the root.
+    if parent is not None:
         graph.add_edge(parent, node["id"])
     for child in node.get("children", []):
         _build_graph(node=child, graph=graph, parent=node["id"])
@@ -161,8 +170,21 @@ def yfull_tree_to_tree_data(file_path: Path, version: str | None = None) -> YTre
     )
 
 
+@functools.lru_cache(maxsize=1)
+def _load_tree_data(file_path: str, version: str, mtime: int) -> YTreeData:
+    """Parse a YFull tree file, caching the result.
+
+    Only the most recently used tree is cached, as a parsed tree needs a lot of
+    memory. The modification time is part of the cache key so that a re-downloaded
+    tree is parsed again.
+    """
+    return yfull_tree_to_tree_data(Path(file_path), version=version)
+
+
 def get_yfull_tree_data(
-    version: str | None = None, data_dir: Path | None = None
+    version: str | None = None,
+    data_dir: Path | str | None = None,
+    cache: bool = False,
 ) -> YTreeData:
     """Get the YFull tree data from cache, download if needed.
 
@@ -171,9 +193,16 @@ def get_yfull_tree_data(
             version is used.
         data_dir: The directory to store the YFull data. If None, the default user
             data directory is used.
+        cache: If True, keep the parsed tree in memory and reuse it in subsequent
+            calls. This makes repeated calls much faster, but a parsed tree needs
+            a lot of memory (of the order of 100 MB), which is only released
+            again when another tree is cached. The cached object is shared
+            between calls and should not be modified.
     """
     data_dir = _get_actual_data_dir(data_dir)
     version = version or YTREE_DEFAULT_VERSION
     file_path = data_dir / YTREE_JSON_FILENAME.format(version=version)
     download_yfull_tree(version=version, data_dir=data_dir, force=False)
-    return yfull_tree_to_tree_data(file_path, version=version)
+    if not cache:
+        return yfull_tree_to_tree_data(file_path, version=version)
+    return _load_tree_data(str(file_path), version, file_path.stat().st_mtime_ns)

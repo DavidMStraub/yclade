@@ -1,7 +1,9 @@
 """Command line interface for yclade."""
 
-import click
 import logging
+from pathlib import Path
+
+import click
 
 import yclade
 
@@ -12,7 +14,10 @@ import yclade
     "--version", "-V", default=None, help="The YFull version to use (optional)."
 )
 @click.option(
-    "--data-dir", default=None, help="The directory to store the YFull data (optional)."
+    "--data-dir",
+    default=None,
+    type=click.Path(file_okay=False, path_type=Path),
+    help="The directory to store the YFull data (optional).",
 )
 @click.option("--file", "-f", type=click.File("r"))
 @click.option("--verbose", "-v", is_flag=True, help="Print verbose output.")
@@ -27,7 +32,7 @@ def main(snp_string, version, data_dir, file, verbose):
         console_handler.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.WARNING)
-        console_handler.setLevel(logging.DEBUG)
+        console_handler.setLevel(logging.WARNING)
     logger.addHandler(console_handler)
     if not snp_string and not file:
         raise click.UsageError("You must provide either a SNP string or a file.")

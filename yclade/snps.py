@@ -15,8 +15,8 @@ def parse_snp_results(snp_string: str) -> SnpResults:
     or snp- (for a negatively tested SNP), otherwise they are ignored.
     """
     snps = [snp.strip() for snp in snp_string.split(",")]
-    positive_snps = {snp.rstrip("+") for snp in snps if snp.endswith("+")}
-    negative_snps = {snp.rstrip("-") for snp in snps if snp.endswith("-")}
+    positive_snps = {snp[:-1] for snp in snps if snp.endswith("+")}
+    negative_snps = {snp[:-1] for snp in snps if snp.endswith("-")}
     snp_results = SnpResults(positive=positive_snps, negative=negative_snps)
     return warn_and_remove_duplicates(snp_results)
 
