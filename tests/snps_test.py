@@ -32,3 +32,10 @@ def test_parse_snp_results_invalid():
     results = yclade.snps.parse_snp_results(snp_string)
     assert results.positive == set()
     assert results.negative == set()
+
+
+def test_parse_snp_results_strips_a_single_sign():
+    """Only the trailing +/- is a test result, the rest is the SNP name."""
+    results = yclade.snps.parse_snp_results("A++, B--")
+    assert results.positive == {"A+"}
+    assert results.negative == {"B-"}

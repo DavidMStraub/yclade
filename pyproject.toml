@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yclade"
-version = "0.6.0"
+version = "0.7.0"
 description = "A Python library to find the position on the human Y chromosome tree given a set of single nucleotide polymorphisms (SNPs)."
 license = {text = "MIT"}
 readme = "README.md"
@@ -23,6 +23,12 @@ test = [
     "mypy",
     "click",
 ]
+
+[tool.setuptools.packages.find]
+include = ["yclade*"]
+
+[tool.setuptools.package-data]
+yclade = ["py.typed"]
 
 [tool.isort]
 profile = "black"

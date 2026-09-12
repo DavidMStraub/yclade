@@ -5,35 +5,52 @@ from collections.abc import Callable
 
 import networkx as nx
 
-from yclade.types import CladeInfo, CladeMatchInfo, CladeName, SnpResults, YTreeData
+from yclade.types import (
+    CladeInfo,
+    CladeMatchInfo,
+    CladeName,
+    Snp,
+    SnpResults,
+    YTreeData,
+)
+
+
+def _canonical_snps(tree: YTreeData, snps: SnpResults) -> tuple[set[Snp], set[Snp]]:
+    """Cast the tested SNPs to their canonical form."""
+    return (
+        {tree.snp_aliases.get(snp, snp) for snp in snps.positive},
+        {tree.snp_aliases.get(snp, snp) for snp in snps.negative},
+    )
+
+
+def _match_info(
+    clade_snps: set[Snp], positives: set[Snp], negatives: set[Snp]
+) -> CladeMatchInfo:
+    """Match a clade's SNPs against already canonicalized test results."""
+    return CladeMatchInfo(
+        positive=len(positives & clade_snps),
+        negative=len(negatives & clade_snps),
+        length=len(clade_snps),
+    )
 
 
 def find_nodes_with_positive_matches(
     tree: YTreeData, snps: SnpResults
 ) -> set[CladeName]:
     """Find the nodes in the tree that have at least one matching positive SNP."""
-    nodes = set()
-    positives = set(tree.snp_aliases.get(snp, snp) for snp in snps.positive)
-    for clade, clade_snps in tree.clade_snps.items():
-        if positives & clade_snps:
-            nodes.add(clade)
-    return nodes
+    positives, _ = _canonical_snps(tree, snps)
+    return {
+        clade
+        for clade, clade_snps in tree.clade_snps.items()
+        if positives & clade_snps
+    }
 
 
 def get_node_match_info(
     tree: YTreeData, node: CladeName, snps: SnpResults
 ) -> CladeMatchInfo:
     """Get the match info for a single node."""
-    clade_snps = tree.clade_snps[node]
-    positives = set(tree.snp_aliases.get(snp, snp) for snp in snps.positive)
-    negatives = set(tree.snp_aliases.get(snp, snp) for snp in snps.negative)
-    clade_positives = len(positives & clade_snps)
-    clade_negatives = len(negatives & clade_snps)
-    return CladeMatchInfo(
-        positive=clade_positives,
-        negative=clade_negatives,
-        length=len(clade_snps),
-    )
+    return _match_info(tree.clade_snps[node], *_canonical_snps(tree, snps))
 
 
 def get_all_nodes_match_info(
@@ -84,17 +101,24 @@ def get_ordered_clade_details(tree: YTreeData, snps: SnpResults) -> list[CladeIn
     The first clade in the list is the best match.
     """
     warn_unknown_snps(tree=tree, snps=snps)
+    positives, negatives = _canonical_snps(tree, snps)
+    scores: dict[CladeName, float] = {}
+
+    def score(node: CladeName) -> float:
+        """Score a single clade, reusing the scores of already seen clades."""
+        if node not in scores:
+            scores[node] = simple_scoring_function(
+                _match_info(tree.clade_snps[node], positives, negatives)
+            )
+        return scores[node]
+
     candidates = find_nodes_with_positive_matches(tree=tree, snps=snps)
-    candidate_scores = {}
-    for node in candidates:
-        scores = get_node_path_scores(
-            tree=tree,
-            node=node,
-            snps=snps,
-            scoring_function=simple_scoring_function,
-        )
-        total_score = sum(scores.values())
-        candidate_scores[node] = total_score
+    # Candidates share most of their ancestors, so scoring each clade once and
+    # reusing the result is much faster than scoring every path independently.
+    candidate_scores = {
+        node: score(node) + sum(score(a) for a in nx.ancestors(tree.graph, node))
+        for node in candidates
+    }
     return [
         CladeInfo(
             name=node,
@@ -107,14 +131,17 @@ def get_ordered_clade_details(tree: YTreeData, snps: SnpResults) -> list[CladeIn
 
 def warn_unknown_snps(tree: YTreeData, snps: SnpResults) -> None:
     """Log a warning if the query contains SNPs not contained in the Y tree."""
-    known_snps = set(tree.snp_aliases.keys()) | set(
-        snp for clade_snps in tree.clade_snps.values() for snp in clade_snps
-    )
-    unknown_snps = (snps.positive | snps.negative) - known_snps
+    # Whittle down the tested SNPs instead of collecting every SNP in the tree,
+    # which needs a lot of time and memory for a large query.
+    unknown_snps = (snps.positive | snps.negative) - tree.snp_aliases.keys()
+    for clade_snps in tree.clade_snps.values():
+        if not unknown_snps:
+            break
+        unknown_snps -= clade_snps
     if unknown_snps:
         logger = logging.getLogger("yclade")
         logger.warning(
-            "The SNP query contains %s SNP%s " "not contained in the Y tree: %s",
+            "The SNP query contains %s SNP%s not contained in the Y tree: %s",
             len(unknown_snps),
             "s" if len(unknown_snps) > 1 else "",
             unknown_snps,
@@ -142,7 +169,8 @@ def get_clade_lineage(tree: YTreeData, node: str) -> list[CladeInfo]:
     `CladeInfo`.
 
     The clades are ordered from root to leaf."""
-    names = _get_ancestors_ordered(tree.graph, node)
+    # The root of the YFull tree has an empty ID and is not a real clade.
+    names = [name for name in _get_ancestors_ordered(tree.graph, node) if name]
     names.append(node)
     clade_age_infos = [tree.clade_age_infos.get(clade) for clade in names]
     return [
